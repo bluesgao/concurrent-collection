@@ -20,6 +20,18 @@ func TestCopyOnWriteList_Add(t *testing.T) {
 	t.Logf("list: %v \n", list.elements)
 }
 
+func TestCopyOnWriteList_AddByPosition(t *testing.T) {
+	cowl := New(4)
+	//init data
+	for i := 0; i < 10; i++ {
+		cowl.Add("ele" + strconv.Itoa(i))
+	}
+
+	log.Printf("AddByPosition before Size:%d,elements:%v \n", cowl.Size(), cowl.elements)
+	ret, err := cowl.AddByPosition(9, "ele-new")
+	log.Printf("AddByPosition after Ret:%v ,Err:%v,Size:%d,elements:%v \n", ret, err, cowl.Size(), cowl.elements)
+}
+
 func TestCopyOnWriteList_Add2(t *testing.T) {
 	cowl := New(4)
 	wg := new(sync.WaitGroup)
@@ -77,8 +89,6 @@ func TestCopyOnWriteList_RemoveRange(t *testing.T) {
 	}
 
 	log.Printf("remove before Size:%d,elements:%v \n", cowl.Size(), cowl.elements)
-	ret,err := cowl.RemoveRange(0, 1)
+	ret, err := cowl.RemoveRange(0, 1)
 	log.Printf("remove after Ret:%v ,Err:%v,Size:%d,elements:%v \n", ret, err, cowl.Size(), cowl.elements)
 }
-
-

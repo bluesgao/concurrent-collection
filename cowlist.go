@@ -22,10 +22,10 @@ func New(capacity int) *CopyOnWriteList {
 	if capacity <= 0 || capacity > INT_MAX {
 		capacity = DEFAULT_CAPACITY
 	}
-	return new(CopyOnWriteList).Init(capacity)
+	return new(CopyOnWriteList).init(capacity)
 }
 
-func (cowlist *CopyOnWriteList) Init(capacity int) *CopyOnWriteList {
+func (cowlist *CopyOnWriteList) init(capacity int) *CopyOnWriteList {
 	cowlist.elements = make([]element, 0, capacity)
 	return cowlist
 }
@@ -49,19 +49,39 @@ func (cowlist *CopyOnWriteList) Add(ele element) bool {
 func (cowlist *CopyOnWriteList) AddByPosition(index int, ele element) (bool, error) {
 
 	cowlist.mutex.Lock()
-	len := len(cowlist.elements)
+	oldLen := len(cowlist.elements)
 	//index不在有效范围内
-	if index > len || index < 0 {
+	if index >= oldLen || index < 0 {
 		return false, errors.New("index out of bounds")
 	}
-	//需要移动的元素个数
-	numMoved := len - index
-	//根据index将原始数组分成2段
-	new1 := cowlist.elements[0:numMoved]
-	new2 := cowlist.elements[numMoved:len]
-	newElements := append(append(new1, ele), new2)
-	cowlist.elements = newElements
 
+	var newElements []element
+
+	//头插
+	if index == 0 {
+		newElements = append(newElements, ele)
+		for i := 0; i < oldLen; i++ {
+			newElements = append(newElements, cowlist.elements[i])
+		}
+	} else if index == oldLen-1 { //尾插
+		newElements = append(cowlist.elements, ele)
+	} else { //中间插
+		//将原始数组按照index分割成两部分
+		part1 := cowlist.elements[0 : index-1]
+		part2 := cowlist.elements[index:oldLen]
+		//将分割后的两部分连接起来
+		for i := 0; i < len(part1); i++ {
+			newElements = append(newElements, part1[i])
+		}
+
+		//插入新值
+		newElements = append(newElements, ele)
+
+		for i := 0; i < len(part2); i++ {
+			newElements = append(newElements, part2[i])
+		}
+	}
+	cowlist.elements = newElements
 	defer cowlist.mutex.Unlock()
 	return true, nil
 }
