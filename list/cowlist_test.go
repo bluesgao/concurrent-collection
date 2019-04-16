@@ -1,4 +1,4 @@
-package cowlist
+package list
 
 import (
 	"log"

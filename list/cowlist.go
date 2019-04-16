@@ -1,4 +1,4 @@
-package cowlist
+package list
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-type element = interface{}
+type object = interface{}
 
 const DEFAULT_CAPACITY = int(8)
 
@@ -14,7 +14,7 @@ const INT_MAX = int(^uint(0) >> 1) //int最大值
 
 type CopyOnWriteList struct {
 	mutex    sync.Mutex //互斥锁
-	elements []element  //存放数据的数组
+	elements []object  //存放数据的数组
 }
 
 func New(capacity int) *CopyOnWriteList {
@@ -26,17 +26,17 @@ func New(capacity int) *CopyOnWriteList {
 }
 
 func (cowlist *CopyOnWriteList) init(capacity int) *CopyOnWriteList {
-	cowlist.elements = make([]element, 0, capacity)
+	cowlist.elements = make([]object, 0, capacity)
 	return cowlist
 }
 
 /*非线程安全*/
-func (cowlist *CopyOnWriteList) Get(index int) element {
+func (cowlist *CopyOnWriteList) Get(index int) object {
 	eles := cowlist.elements //副本
 	return eles[index]
 }
 
-func (cowlist *CopyOnWriteList) Add(ele element) bool {
+func (cowlist *CopyOnWriteList) Add(ele object) bool {
 	cowlist.mutex.Lock()
 	//先复制，再追加，最后替换
 	//newElements := l.elements
@@ -46,7 +46,7 @@ func (cowlist *CopyOnWriteList) Add(ele element) bool {
 	return true
 }
 
-func (cowlist *CopyOnWriteList) AddByPosition(index int, ele element) (bool, error) {
+func (cowlist *CopyOnWriteList) AddByPosition(index int, ele object) (bool, error) {
 
 	cowlist.mutex.Lock()
 	oldLen := len(cowlist.elements)
@@ -55,7 +55,7 @@ func (cowlist *CopyOnWriteList) AddByPosition(index int, ele element) (bool, err
 		return false, errors.New("index out of bounds")
 	}
 
-	var newElements []element
+	var newElements []object
 
 	//头插
 	if index == 0 {
@@ -86,7 +86,7 @@ func (cowlist *CopyOnWriteList) AddByPosition(index int, ele element) (bool, err
 	return true, nil
 }
 
-func (cowlist *CopyOnWriteList) Remove(index int) (element, error) {
+func (cowlist *CopyOnWriteList) Remove(index int) (object, error) {
 	cowlist.mutex.Lock()
 	oldLen := len(cowlist.elements)
 	//index不在有效范围内
@@ -102,7 +102,7 @@ func (cowlist *CopyOnWriteList) Remove(index int) (element, error) {
 	} else if index == oldLen-1 { //最后一个元素
 		cowlist.elements = cowlist.elements[0 : oldLen-1]
 	} else { //中间元素
-		var newElements []element
+		var newElements []object
 		//将原始数组按照index分割成两部分
 		part1 := cowlist.elements[0 : index-1]
 		part2 := cowlist.elements[index:oldLen]
@@ -133,7 +133,7 @@ func (cowlist *CopyOnWriteList) RemoveRange(fromIndex int, toIndex int) (bool, e
 	} else if fromIndex >= 0 && toIndex == oldLen-1 { //删除最后几个元素
 		cowlist.elements = cowlist.elements[0:fromIndex]
 	} else { //删除中间几个元素
-		var newElements, part1, part2 []element
+		var newElements, part1, part2 []object
 		//将原始数组按照rangeindex分割成两部分
 		if fromIndex == toIndex {
 			part1 = cowlist.elements[0 : fromIndex-1]
